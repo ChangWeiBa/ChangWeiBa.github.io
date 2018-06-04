@@ -8,12 +8,8 @@ script:
   - bundle install
   - bundle exec jekyll build
 after_success:
-  - ls -a
-#  - git clone https://github.com/zhouhaoo/zhouhaoo.github.io.git
-#  - cd zhouhaoo.github.io && rm -rf * && cp -r ../_site/* .
-  - mv CNAME README.md -t _site/
+#  - mv CNAME README.md -t _site/
   - cd _site
-  - ls -a
   - git init
   - git config user.name "zhouhaoo"
   - git config user.email "zhouhao7@icloud.com"
