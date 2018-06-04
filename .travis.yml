@@ -8,7 +8,7 @@ script:
   - bundle install
   - bundle exec jekyll build
 after_success:
-#  - mv CNAME README.md -t _site/
+  - mv CNAME -t _site/
   - cd _site
   - git init
   - git config user.name "ChangWeiBa"
