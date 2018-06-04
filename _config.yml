@@ -2,8 +2,8 @@
 title: ChangWeiBa Blog
 SEOTitle: 常尾巴的博客 | ChangWeiBa Blog
 header-img: img/home-bg.jpg
-#email: zhouhao0912@gmail.com
-#description: "周豪, zhouhao, 周豪的博客，zhouhao blog， 博客，个人网站，android， 安卓，笔记，移动端"
+#email: cw171852543@gmail.com
+#description: "汪常伟的小笔记，changweiba blog， 博客，个人网站，android， 安卓，笔记，移动端"
 keyword: ""
 #url: "http://zhouhaoh.com"              # your host, for absolute URL
 # baseurl: "/huxblog-boilerplate"         # for example, '/blog' if your blog hosted on 'host/blog'
@@ -13,7 +13,7 @@ keyword: ""
 # SNS settings
 RSS: false
 weibo_username: ChangWeiBa
-#zhihu_username: zhouhaoo
+#zhihu_username: ChangWeiBa
 github_username: ChangWeiBa
 twitter_username: ChangWeiBa
 facebook_username: ChangWeiBa
