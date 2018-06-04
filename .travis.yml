@@ -11,11 +11,11 @@ after_success:
 #  - mv CNAME README.md -t _site/
   - cd _site
   - git init
-  - git config user.name "zhouhaoo"
+  - git config user.name "ChangWeiBa"
   - git config user.email "zhouhao7@icloud.com"
   - git add --all .
   - git commit -m "Travis-CI auto builder"
-  - git remote add origin https://$DEPLOY_TOKEN@github.com/zhouhaoo/zhouhaoo.github.io.git
+  - git remote add origin https://$DEPLOY_TOKEN@github.com/ChangWeiBa/ChangWeiBa.github.io.git
   - git remote show origin
   - git push --force origin master
 #  - git push origin master
