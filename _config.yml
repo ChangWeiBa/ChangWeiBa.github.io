@@ -1,22 +1,22 @@
 # Site settings
-title: Zhouhao Blog
-SEOTitle: 周豪的博客 | Zhouhao Blog
+title: ChangWeiBa Blog
+SEOTitle: 常尾巴的博客 | ChangWeiBa Blog
 header-img: img/home-bg.jpg
-email: zhouhao0912@gmail.com
-description: "周豪, zhouhao, 周豪的博客，zhouhao blog， 博客，个人网站，android， 安卓，笔记，移动端"
+#email: zhouhao0912@gmail.com
+#description: "周豪, zhouhao, 周豪的博客，zhouhao blog， 博客，个人网站，android， 安卓，笔记，移动端"
 keyword: ""
-url: "http://zhouhaoh.com"              # your host, for absolute URL
+#url: "http://zhouhaoh.com"              # your host, for absolute URL
 # baseurl: "/huxblog-boilerplate"         # for example, '/blog' if your blog hosted on 'host/blog'
 
 
 
 # SNS settings
 RSS: false
-weibo_username: zhouhaoo
+weibo_username: ChangWeiBa
 #zhihu_username: zhouhaoo
 github_username: ChangWeiBa
-twitter_username: zhouhaoo
-facebook_username: zhouhaoo
+twitter_username: ChangWeiBa
+facebook_username: ChangWeiBa
 
 
 
