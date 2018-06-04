@@ -17,7 +17,7 @@ tags:
 
 开局一张图
 
-![dataSource.png](img/dataSource.png "dataSource.png")
+![dataSource.png](/img/dataSource.png "dataSource.png")
 
 [本文博客地址](http://blog.csdn.net/wanniu/article/details/78533796 "还可以进入博客查看本文")
 
@@ -57,13 +57,13 @@ tags:
 
 通过前期查看和研究ExoPlayer源码我们观察到，这一系列的资源提供、分拆与解析过程在ExtractorMediaSource下的ExtractorMediaPeriod类有很清晰的体现。
 
-![DefaultExtractorInput.png](img/DefaultExtractorInput.png "DefaultExtractorInput.png")
+![DefaultExtractorInput.png](/img/DefaultExtractorInput.png "DefaultExtractorInput.png")
 
 而我们需要实现的需求中，本质上只是把MP3文件加密了一次而已，它在播放的时候，最终只需要在拆解提供资源的时候把加密的文件流解密成正常的MP3流，给ExtractorMediaSource提供正常的MP3流即可，所以并不需要再过多的进行其他复杂操作就可以完成此需求。
 
 那么我实现的就是重写DefaultDataSourceFactory资源提供工厂类，改造DefaultDataSource，根据文件类型判断，加密的音频使用Aes128DataSource类拆解进行解密，未加密或者在线的URL继续使用getFileDataSource或者getContentDataSource原本默认的实现进行拆解。最后只需要用我们改写的factory替换默认的DataSourceFactory就可以完成我们的需求了。
 
-![TestPlayerActivity.png](img/TestPlayerActivity.png "TestPlayerActivity.png")
+![TestPlayerActivity.png](/img/TestPlayerActivity.png "TestPlayerActivity.png")
 
 #### 1.AitripDataSourceFactory
 AitripDataSourceFactory是重写的DataSourceFactory工厂类，直接copyDefaultDataSource而来。主要是重写了createDataSource()方法，用于进入资源选择类AitripDataSource
