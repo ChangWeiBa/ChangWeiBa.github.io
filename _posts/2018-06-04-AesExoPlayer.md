@@ -11,4 +11,3 @@ tags:
     - AES
 ---
 ## 使用方式
-本文的适用范围是使用ExoPlayer框架时，直接解密播放已经经过AES加密过（或者类似需求）的音频或者视频，是利用官方demo内DefaultDataSourceFactory与DefaultDataSource改造而来。
