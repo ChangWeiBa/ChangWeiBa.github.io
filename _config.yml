@@ -12,11 +12,11 @@ keyword: ""
 
 # SNS settings
 RSS: false
-weibo_username: ChangWeiBa
+# weibo_username: ChangWeiBa
 #zhihu_username: ChangWeiBa
 github_username: ChangWeiBa
-twitter_username: ChangWeiBa
-facebook_username: ChangWeiBa
+# twitter_username: ChangWeiBa
+# facebook_username: ChangWeiBa
 
 
 
