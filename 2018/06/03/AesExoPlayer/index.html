@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="keywords"  content="">
+    <meta name="theme-color" content="">
+    
+    <title>ExoPlayer利用自定义DataSource实现直接播放AES加密音频 - 常尾巴的博客 | ChangWeiBa Blog</title>
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/pwa/manifest.json">
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="/2018/06/03/AesExoPlayer/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">ChangWeiBa Blog</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/about/">About</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from 
+     * $toggle/$collapse will break global delegation.
+     * 
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.  
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/home-bg-one4.jpg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        position: relative;
+        background-image: url('/img/home-bg-one4.jpg')
+    }
+
+    
+</style>
+<header class="intro-header" >
+    <div class="header-mask"></div>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#Android" title="Android">Android</a>
+                        
+                        <a class="tag" href="/tags/#ExoPlayer" title="ExoPlayer">ExoPlayer</a>
+                        
+                        <a class="tag" href="/tags/#AES" title="AES">AES</a>
+                        
+                    </div>
+                    <h1>ExoPlayer利用自定义DataSource实现直接播放AES加密音频</h1>
+                    
+                    
+                    <h2 class="subheading"> "ExoPlayer自定义DataSource"</h2>
+                    
+                    <span class="meta">Posted by changweiba on 2018年06月03日</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+				<h2 id="使用方式">使用方式</h2>
+
+<h2 id="exoplayer利用自定义datasource实现直接播放aes加密音频">ExoPlayer利用自定义DataSource实现直接播放AES加密音频</h2>
+
+<p>开局一张图</p>
+
+<p><img src="/img/dataSource.png" alt="dataSource.png" title="dataSource.png" /></p>
+
+<p><a href="http://blog.csdn.net/wanniu/article/details/78533796" title="还可以进入博客查看本文">本文博客地址</a></p>
+
+<p><a href="http://www.jianshu.com/p/4dede867739d" title="ExoPlayer源码浅析">ExoPlayer源码浅析</a></p>
+
+<p><a href="http://www.jianshu.com/p/4dede867739d" title="ExoPlayer 官方文档">ExoPlayer官方文档</a></p>
+
+<p><a href="https://github.com/google/ExoPlayer" title="ExoPlayer Github">ExoPlayer GitHub</a></p>
+
+<h2 id="需求与适用范围">需求与适用范围</h2>
+<p>首先本文的适用范围是使用ExoPlayer框架时，直接解密播放已经经过AES加密过（或者类似需求）的音频或者视频，是利用官方demo内DefaultDataSourceFactory与DefaultDataSource改造而来。有需求就可以继续往下看了</p>
+
+<h4 id="0故事的开始">0.故事的开始</h4>
+<p>故事的开始还得从新需求开始说起。公司新开了一个旅游项目，其中主要功能就是播放在线或者本地音频，这个非常非常平常的需求，让我开始EXO之旅。</p>
+
+<p>为什么不使用最平常简单的MediaPlayer,因为程序员喜新厌旧哇 嘻嘻。</p>
+
+<p>其中我们最主要的需求就是，下载下来的本地音频需要加密存放在本地，在播放的时候进行解密播放，以保证数据的安全性，在这里选用了常见的AES加解密。</p>
+
+<p>相信这些需求应该的比较常见的类型了，在选用Exoplayer之后，在线播放什么的肯定不用花费过多时间了，但在进行本地播放的时候碰到了问题。</p>
+
+<p>当初在查询ExoPlayer文档的时候是知道和看中了它的自定义资源播放功能的，官方文档和各种源码解析都说它有强大的自定义功能，但是等到我真正要实现我功能的时候，我感觉ExoPlayer是一个孤儿…</p>
+
+<p>为什么在GitHub上8000+星星的ExoPlayer在百度上的资料这么少（想抄都没地方抄）。。 百度Google了一圈下来，折腾完ExtractorsFactory，折腾Mp3Extractor，完全摸错了门。后来在<a href="https://stackoverflow.com/questions/37658411/ecb-encryption-with-exoplayer" title="stackoverflow">stackOverflow</a> 看到终于一篇关于自定义dataSource的提问，至此找到问题解决入口。</p>
+
+<h2 id="思路与使用方式">思路与使用方式</h2>
+
+<p>关于ExoPlayer的各种源码、使用解析在这就不赘叙了。正常的情况下，使用ExoPlayer默认的DefaultDataSource是完成不了直接播放AES加密音频的。</p>
+
+<p>最开始，要实现播放，只能先把AES音频解密成正常的MP3音频，这样，就完全打破了最初我们要把本地下载下来的音频加密存放与播放的预想，解密过后的音频总会在文件夹中显示出来，并以正常的MP3存在，这样音频就毫无安全性可言了，也就是说没有完成需求。</p>
+
+<p>为解决能直接播放AES加密音频的问题，我们采用的是自定义改写DataSourceFactory类，改写DataSource类，复用官方demo中Aes128DataSource类来完成的。</p>
+
+<p>只需要改写这一系列DataSource类文件，就可以完成我们直接播放AES音频文件的需求，下面逐个进行解析。</p>
+
+<p>通过前期查看和研究ExoPlayer源码我们观察到，这一系列的资源提供、分拆与解析过程在ExtractorMediaSource下的ExtractorMediaPeriod类有很清晰的体现。</p>
+
+<p><img src="/img/DefaultExtractorInput.png" alt="DefaultExtractorInput.png" title="DefaultExtractorInput.png" /></p>
+
+<p>而我们需要实现的需求中，本质上只是把MP3文件加密了一次而已，它在播放的时候，最终只需要在拆解提供资源的时候把加密的文件流解密成正常的MP3流，给ExtractorMediaSource提供正常的MP3流即可，所以并不需要再过多的进行其他复杂操作就可以完成此需求。</p>
+
+<p>那么我实现的就是重写DefaultDataSourceFactory资源提供工厂类，改造DefaultDataSource，根据文件类型判断，加密的音频使用Aes128DataSource类拆解进行解密，未加密或者在线的URL继续使用getFileDataSource或者getContentDataSource原本默认的实现进行拆解。最后只需要用我们改写的factory替换默认的DataSourceFactory就可以完成我们的需求了。</p>
+
+<p><img src="/img/TestPlayerActivity.png" alt="TestPlayerActivity.png" title="TestPlayerActivity.png" /></p>
+
+<h4 id="1aitripdatasourcefactory">1.AitripDataSourceFactory</h4>
+<p>AitripDataSourceFactory是重写的DataSourceFactory工厂类，直接copyDefaultDataSource而来。主要是重写了createDataSource()方法，用于进入资源选择类AitripDataSource</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="n">AitripDataSource</span> <span class="nf">createDataSource</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="k">new</span> <span class="nf">AitripDataSource</span><span class="o">(</span><span class="n">context</span><span class="o">,</span> <span class="n">listener</span><span class="o">,</span> <span class="n">baseDataSourceFactory</span><span class="o">.</span><span class="na">createDataSource</span><span class="o">());</span>
+    <span class="o">}</span>
+</code></pre></div></div>
+
+<h4 id="2aitripdatasource">2.AitripDataSource</h4>
+<p>改写DataSource内open方法，用于扩展数据源选择方案，以让其正确选择到我们的解密Aes128DataSource类，注释基本可以解释一切。因为我在本地加密的文件是在文件名后又添加了.aitrip字段，所以只需根据文件名判断是否包含.aitrip，选择正确的DataSource解析即可。</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">long</span> <span class="nf">open</span><span class="o">(</span><span class="n">DataSpec</span> <span class="n">dataSpec</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
+        <span class="n">Assertions</span><span class="o">.</span><span class="na">checkState</span><span class="o">(</span><span class="n">dataSource</span> <span class="o">==</span> <span class="kc">null</span><span class="o">);</span>
+        <span class="c1">// Choose the correct source for the scheme.</span>
+        <span class="c1">//选择正确的数据源方案</span>
+        <span class="n">String</span> <span class="n">scheme</span> <span class="o">=</span> <span class="n">dataSpec</span><span class="o">.</span><span class="na">uri</span><span class="o">.</span><span class="na">getScheme</span><span class="o">();</span>
+        <span class="c1">//如果URI是一个本地文件路径或本地文件的引用。</span>
+        <span class="n">Timber</span><span class="o">.</span><span class="na">e</span><span class="o">(</span><span class="s">"解密：000000,"</span> <span class="o">+</span> <span class="n">scheme</span> <span class="o">+</span> <span class="s">",path:"</span> <span class="o">+</span> <span class="n">dataSpec</span><span class="o">.</span><span class="na">uri</span><span class="o">.</span><span class="na">getPath</span><span class="o">());</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">Util</span><span class="o">.</span><span class="na">isLocalFileUri</span><span class="o">(</span><span class="n">dataSpec</span><span class="o">.</span><span class="na">uri</span><span class="o">))</span> <span class="o">{</span>
+            <span class="c1">//如果路径尾包含aitrip的文件名，使用解密类</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">dataSpec</span><span class="o">.</span><span class="na">uri</span><span class="o">.</span><span class="na">getPath</span><span class="o">().</span><span class="na">endsWith</span><span class="o">(</span><span class="s">".aitrip"</span><span class="o">))</span> <span class="o">{</span>
+                <span class="n">Aes128DataSource</span> <span class="n">aes128DataSource</span> <span class="o">=</span>
+                        <span class="k">new</span> <span class="nf">Aes128DataSource</span><span class="o">(</span><span class="n">getFileDataSource</span><span class="o">(),</span> <span class="n">Aikey</span><span class="o">.</span><span class="na">getBytes</span><span class="o">(),</span> <span class="n">Aikey</span><span class="o">.</span><span class="na">getBytes</span><span class="o">());</span>
+                <span class="n">dataSource</span> <span class="o">=</span> <span class="n">aes128DataSource</span><span class="o">;</span>
+            <span class="o">}</span> <span class="k">else</span> <span class="o">{</span><span class="c1">//否则，正常解析mp3</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">dataSpec</span><span class="o">.</span><span class="na">uri</span><span class="o">.</span><span class="na">getPath</span><span class="o">().</span><span class="na">startsWith</span><span class="o">(</span><span class="s">"/android_asset/"</span><span class="o">))</span> <span class="o">{</span>
+                    <span class="n">dataSource</span> <span class="o">=</span> <span class="n">getAssetDataSource</span><span class="o">();</span>
+                <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                    <span class="n">dataSource</span> <span class="o">=</span> <span class="n">getFileDataSource</span><span class="o">();</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+        <span class="o">}</span> <span class="k">else</span> <span class="k">if</span> <span class="o">(</span><span class="n">SCHEME_ASSET</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">scheme</span><span class="o">))</span> <span class="o">{</span>
+            <span class="n">dataSource</span> <span class="o">=</span> <span class="n">getAssetDataSource</span><span class="o">();</span>
+        <span class="o">}</span> <span class="k">else</span> <span class="k">if</span> <span class="o">(</span><span class="n">SCHEME_CONTENT</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">scheme</span><span class="o">))</span> <span class="o">{</span>
+            <span class="n">dataSource</span> <span class="o">=</span> <span class="n">getContentDataSource</span><span class="o">();</span>
+        <span class="o">}</span> <span class="k">else</span> <span class="k">if</span> <span class="o">(</span><span class="n">SCHEME_RTMP</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">scheme</span><span class="o">))</span> <span class="o">{</span>
+            <span class="n">dataSource</span> <span class="o">=</span> <span class="n">getRtmpDataSource</span><span class="o">();</span>
+        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+            <span class="n">dataSource</span> <span class="o">=</span> <span class="n">baseDataSource</span><span class="o">;</span>
+        <span class="o">}</span>
+        <span class="c1">// Open the source and return.</span>
+        <span class="k">return</span> <span class="n">dataSource</span><span class="o">.</span><span class="na">open</span><span class="o">(</span><span class="n">dataSpec</span><span class="o">);</span>
+    <span class="o">}</span>
+</code></pre></div></div>
+<h4 id="3aes128datasource">3.Aes128DataSource</h4>
+<p>直接copy自官方demo的AesDataSource，其本用于HLS文件播放列表解密的，但是很巧的是采用了解密方式，对我也同样适用，所以并不需要改动任何一行代码。。
+它主要是实现open后，利用Aes解密方式解密文件流提供给上层使用。</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">long</span> <span class="nf">open</span><span class="o">(</span><span class="n">DataSpec</span> <span class="n">dataSpec</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
+    <span class="n">Cipher</span> <span class="n">cipher</span><span class="o">;</span>
+    <span class="k">try</span> <span class="o">{</span>
+      <span class="n">cipher</span> <span class="o">=</span> <span class="n">Cipher</span><span class="o">.</span><span class="na">getInstance</span><span class="o">(</span><span class="s">"AES/CBC/PKCS7Padding"</span><span class="o">);</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">NoSuchAlgorithmException</span> <span class="o">|</span> <span class="n">NoSuchPaddingException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="nf">RuntimeException</span><span class="o">(</span><span class="n">e</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="n">Key</span> <span class="n">cipherKey</span> <span class="o">=</span> <span class="k">new</span> <span class="n">SecretKeySpec</span><span class="o">(</span><span class="n">encryptionKey</span><span class="o">,</span> <span class="s">"AES"</span><span class="o">);</span>
+    <span class="n">AlgorithmParameterSpec</span> <span class="n">cipherIV</span> <span class="o">=</span> <span class="k">new</span> <span class="n">IvParameterSpec</span><span class="o">(</span><span class="n">encryptionIv</span><span class="o">);</span>
+
+    <span class="k">try</span> <span class="o">{</span>
+      <span class="n">cipher</span><span class="o">.</span><span class="na">init</span><span class="o">(</span><span class="n">Cipher</span><span class="o">.</span><span class="na">DECRYPT_MODE</span><span class="o">,</span> <span class="n">cipherKey</span><span class="o">,</span> <span class="n">cipherIV</span><span class="o">);</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">InvalidKeyException</span> <span class="o">|</span> <span class="n">InvalidAlgorithmParameterException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="nf">RuntimeException</span><span class="o">(</span><span class="n">e</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="n">cipherInputStream</span> <span class="o">=</span> <span class="k">new</span> <span class="n">CipherInputStream</span><span class="o">(</span>
+        <span class="k">new</span> <span class="nf">DataSourceInputStream</span><span class="o">(</span><span class="n">upstream</span><span class="o">,</span> <span class="n">dataSpec</span><span class="o">),</span> <span class="n">cipher</span><span class="o">);</span>
+
+    <span class="k">return</span> <span class="n">C</span><span class="o">.</span><span class="na">LENGTH_UNSET</span><span class="o">;</span>
+  <span class="o">}</span>
+
+</code></pre></div></div>
+
+<p>就这样。。 没了。   完成之后再看回来，这么简单。。。 全是copy。。 说个毛啊。。。。  然而，对于刚接触ExoPlayer，想要实现类似功能，而网上没啥参考的小伙伴来说，应该是有点用的，特此记录。。。。</p>
+
+<h2 id="结束">结束</h2>
+
+<p>有帮助就点星星哟</p>
+
+<p>下载源码慢慢看喔</p>
+
+<p>有什么疑问或者建议欢迎issues留言噢</p>
+
+<p><a href="https://github.com/ChangWeiBa/AesExoPlayer" title="ExoPlayerTest小demo的Github地址">ExoPlayerTest小demo的Github地址</a></p>
+
+
+
+                <hr style="visibility: hidden;">
+
+                
+
+
+                <ul class="pager">
+                    
+                    
+                </ul>
+
+
+                
+
+                
+
+            </div>  
+
+    <!-- Side Catalog Container -->
+        
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    
+
+
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/ChangWeiBa">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; ChangWeiBa Blog 2018
+                    <br>
+                    Theme by <a href="http://huangxuan.me">Hux</a> | Powered by <a
+                        href="http://jekyllrb.com/">jekyll</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+<!-- Service Worker -->
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- 
+     Because of the native support for backtick-style fenced code blocks 
+     right within the Markdown is landed in Github Pages, 
+     From V1.6, There is no need for Highlight.js, 
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0  
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/ 
+     - https://github.com/jneen/rouge/wiki/list-of-supported-languages-and-lexers   
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async('/js/jquery.tagcloud.js',function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-120305049-1';
+    var _gaDomain = 'auto';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+
+
+
+<!-- Side Catalog -->
+
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>
